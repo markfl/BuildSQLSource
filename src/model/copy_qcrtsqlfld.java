@@ -9,11 +9,11 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class copy_follett_qcrtsqlfld extends qcrtsqlfld {
+public class copy_qcrtsqlfld extends qcrtsqlfld {
 
 	public String runqcrtsqlfld() {
 
-		String company = "flores_follett";
+		String company = "liblist";
 		String returnString = new String();
 		CheckTime ct = new CheckTime();
 		Connection connMSSQL = null;
@@ -30,13 +30,16 @@ public class copy_follett_qcrtsqlfld extends qcrtsqlfld {
 			e1.printStackTrace();
 		}
 
-		int counterTotal = getRecordCount(getCompanyName(), "follett", getFileName());
-		System.out.println(counterTotal + " record(s) to copy to qcrtsqlfld.");
+		String fileInputStream = new String();
+		fileInputStream = "C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\liblist\\qcrtsqlfld.csv";
+		double counterTotal = getRecordCount(getCompanyName(), "liblist", getFileName(), fileInputStream);
+		System.out.println((int) counterTotal + " record(s) to copy to qcrtsqlfld.");
 
 		setsupressErrorMsg(true);
-		int counter = 0;
+		double counter = 0.0;
+		int errorCounter = 0;
 		try (BufferedReader in = new BufferedReader(new
-			InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\flores_follett\\data\\follett\\qcrtsqlfld.csv"), "UTF-8"))) {
+			InputStreamReader(new FileInputStream(fileInputStream), "UTF-8"))) {
 			String line;
 			String splitBy = "\\t";
 			setConn(dbMSSQL.connect());
@@ -55,24 +58,37 @@ public class copy_follett_qcrtsqlfld extends qcrtsqlfld {
 					setUpdateOK(true);
 					add();
 					counter++;
-					int m = counter % 100000;
-					if (m == 0)
-						System.out.println(counter + " records of " + counterTotal + " written to qcrtsqlfld");
+					int m = (int) counter % 100000;
+					if (m == 0) {
+						double counterDiff = counter / counterTotal;
+						int counterPercent = (int) (counterDiff * 100);
+						int printCounterTotal = (int) counterTotal;						System.out.println((int) counter + " records of " + printCounterTotal + " written to qcrtsqlfld. " + counterPercent + "% complete.");
+					}
 				} catch (SQLException e) {
 					e.printStackTrace();
+					errorCounter++;
 				}
 			}
-			returnString = ct.calculateElapse("Copy", "qcrtsqlfld", counter);
+			returnString = ct.calculateElapse("Copy", "qcrtsqlfld", (int) counter);
 			dbMSSQL.closeConnection(connMSSQL);
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
+			errorCounter++;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
+			errorCounter++;
 		} catch (IOException e) {
 			e.printStackTrace();
+			errorCounter++;
 		} catch (SQLException e1) {
 			e1.printStackTrace();
+			errorCounter++;
 		}
-		return returnString;
+
+		if (errorCounter == 0) {
+			return returnString;
+		} else {
+			return returnString + errorCounter + " errors occured.";
+		}
 	}
 }

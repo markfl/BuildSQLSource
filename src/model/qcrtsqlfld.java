@@ -20,12 +20,8 @@ public class qcrtsqlfld extends DBClassBuilder {
 	private String	fieldnameuSav;
 	private String	fieldnamelSav;
 
-	private String	Keyfieldnameu;
 
-	private String	Keyfieldnamel;
 
-	private boolean	useKeyfieldnameu;
-	private boolean	useKeyfieldnamel;
 
 	private Collection<ArrayList<String>> allFields = new ArrayList<ArrayList<String>>();
 	private ArrayList<String> allKeyFiles = new ArrayList<String>();
@@ -57,7 +53,7 @@ public class qcrtsqlfld extends DBClassBuilder {
 
 		setDataBase("mssql");
 		setFileName("qcrtsqlfld");
-		setCompanyName("flores_follett");
+		setCompanyName("flores_walsworth");
 
 		setfieldnameu("");
 		setfieldnamel("");
@@ -65,11 +61,7 @@ public class qcrtsqlfld extends DBClassBuilder {
 		setfieldnameuSav();
 		setfieldnamelSav();
 
-		setKeyfieldnameu(getfieldnameu());
-		setKeyfieldnamel(getfieldnamel());
 
-		setUseKeyfieldnameu(false);
-		setUseKeyfieldnamel(false);
 
 		getFields();
 
@@ -87,19 +79,13 @@ public class qcrtsqlfld extends DBClassBuilder {
 
 		setDataBase("mssql");
 		setFileName("qcrtsqlfld");
-		setCompanyName("flores_follett");
+		setCompanyName("flores_walsworth");
 
 		setfieldnameu(fieldnameu);
 		setfieldnamel(fieldnamel);
 
 		setfieldnameuSav();
 		setfieldnamelSav();
-
-		setKeyfieldnameu(getfieldnameu());
-		setKeyfieldnamel(getfieldnamel());
-
-		setUseKeyfieldnameu(false);
-		setUseKeyfieldnamel(false);
 
 		getFields();
 
@@ -164,64 +150,6 @@ public class qcrtsqlfld extends DBClassBuilder {
 		this.fieldnamelSav = getfieldnamel();
 	}
 
-	public String getKeyfieldnameu() {
-		return this.Keyfieldnameu;
-	}
-
-	public void setKeyfieldnameu(String Keyfieldnameu) {
-		setUseKeyfieldnameu(false);
-		this.Keyfieldnameu = "";
-		if (!Keyfieldnameu.isEmpty()) {
-			int fldlength = 20;
-			if (checkSizeString("Keyfieldnameu", Keyfieldnameu, fldlength)) {
-				this.Keyfieldnameu = Keyfieldnameu;
-				setUseKeyfieldnameu(true);
-			} else {
-				if (!supressErrorMsg) {
-					System.err.println("Field Keyfieldnameu: not updated properly. Keyfieldnameu = " + Keyfieldnameu);
-				}
-				setUpdateOK(false);
-			}
-		}
-	}
-
-	public String getKeyfieldnamel() {
-		return this.Keyfieldnamel;
-	}
-
-	public void setKeyfieldnamel(String Keyfieldnamel) {
-		setUseKeyfieldnamel(false);
-		this.Keyfieldnamel = "";
-		if (!Keyfieldnamel.isEmpty()) {
-			int fldlength = 20;
-			if (checkSizeString("Keyfieldnamel", Keyfieldnamel, fldlength)) {
-				this.Keyfieldnamel = Keyfieldnamel;
-				setUseKeyfieldnamel(true);
-			} else {
-				if (!supressErrorMsg) {
-					System.err.println("Field Keyfieldnamel: not updated properly. Keyfieldnamel = " + Keyfieldnamel);
-				}
-				setUpdateOK(false);
-			}
-		}
-	}
-
-	public boolean isUseKeyfieldnameu() {
-		return this.useKeyfieldnameu;
-	}
-
-	public void setUseKeyfieldnameu(boolean useKeyfieldnameu) {
-		this.useKeyfieldnameu = useKeyfieldnameu;
-	}
-
-	public boolean isUseKeyfieldnamel() {
-		return this.useKeyfieldnamel;
-	}
-
-	public void setUseKeyfieldnamel(boolean useKeyfieldnamel) {
-		this.useKeyfieldnamel = useKeyfieldnamel;
-	}
-
 	public Connection getConn() {
 		return this.connection;
 	}
@@ -258,109 +186,6 @@ public class qcrtsqlfld extends DBClassBuilder {
 		this.supressErrorMsg = supressErrorMsg;
 	}
 
-//***********Set Key FieldS Section*******************************************//
-
-	public void setKeyFields() {
-		setKeyfieldnameu(getfieldnameu());
-		setKeyfieldnamel(getfieldnamel());
-	}
-
-	public void setKeyFields(String Keyfieldnameu) {
-		setKeyfieldnameu(Keyfieldnameu);
-	}
-
-//***********Get A Record Section*********************************************//
-
-	public boolean get() throws SQLException {
-
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (connection == null) return false;
-
-		if (Keyfieldnameu == "") {
-			System.out.println("Key fields must be set.");
-			return false;
-		}
-
-		String checkSql = "Select * from qcrtsqlfld ";
-
-		int counter = 1;
-
-		if (Keyfieldnameu != "") {
-			checkSql = checkSql + " Where fieldnameu=?";
-		}
-
-		checkStmt = connection.prepareStatement(checkSql);
-
-		if (Keyfieldnameu != "") {
-			checkStmt.setString(counter++, Keyfieldnameu);
-		}
-
-		results = checkStmt.executeQuery();
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		if (results.next()) {
-			updateAllFromResults();
-			setKeyFields();
-			setRecordFound(true);
-			setUpdateOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			System.err.println("Record not retrieved.");
-			return false;
-		}
-	}
-
-//***********Check Existence of a Record Section******************************//
-
-	public boolean exists() throws SQLException {
-
-		int numberOfRecords;
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (connection == null) return false;
-
-		if (Keyfieldnameu == "") {
-			System.out.println("Key fields must be set.");
-			return false;
-		}
-
-		String checkSql = "select count(*) as numberOfRecords from qcrtsqlfld ";
-		if (Keyfieldnameu != "") {
-			checkSql = checkSql + " Where fieldnameu=?";
-		}
-
-		checkStmt =connection.prepareStatement(checkSql);
-		int counter = 1;
-
-		if (Keyfieldnameu != "") {
-			checkStmt.setString(counter++, Keyfieldnameu);
-		}
-
-		results = checkStmt.executeQuery();
-
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		results.next();
-		numberOfRecords = results.getInt(1);
-
-		if (numberOfRecords > 0) return true;
-		else return false;
-	}
-
 //***********File Updating Section********************************************//
 
 	public boolean add() throws SQLException {
@@ -389,68 +214,6 @@ public class qcrtsqlfld extends DBClassBuilder {
 		else return false;
 	}
 
-	public boolean update() throws SQLException {
-
-		boolean fieldBefore = false;
-		setReadeOK(false);
-
-		if (!getUpdateOK()) {
-			System.err.println("Some fields were not updated properly.");
-			return false;
-		}
-
-		if (!getRecordFound()) {
-			System.err.println("Record not retrieved.");
-			return false;
-		}
-
-		String checkSql = "update qcrtsqlfld ";
-
-		int counter = 1;
-
-		checkSql = checkSql.concat(" set ");
-
-		if (fieldnameu != fieldnameuSav) {
-			checkSql = checkSql.concat(" fieldnameu = ?");
-			fieldBefore = true;
-		}
-		if (fieldnamel != fieldnamelSav) {
-			if (fieldBefore) checkSql = checkSql.concat(",");
-			checkSql = checkSql.concat(" fieldnamel = ?");
-			fieldBefore = true;
-		}
-
-		if (Keyfieldnameu != "") {
-			checkSql = checkSql + " Where fieldnameu=?";
-		}
-
-		checkStmt = connection.prepareStatement(checkSql);
-
-		if (fieldnameu != fieldnameuSav) {
-			checkStmt.setString(counter++, fieldnameu);
-		}
-		if (fieldnamel != fieldnamelSav) {
-			checkStmt.setString(counter++, fieldnamel);
-		}
-
-		int record = 0;
-
-		if (counter > 1) {
-
-			if (Keyfieldnameu != "") {
-				checkStmt.setString(counter++, Keyfieldnameu);
-			}
-
-			record = checkStmt.executeUpdate();
-
-			SQLWarning warning = checkStmt.getWarnings();
-			printSQLWarnings(warning);
-
-		}
-		if (record > 0) return true;
-		else return false;
-	}
-
 	public boolean delete() throws SQLException {
 
 		setReadeOK(false);
@@ -462,17 +225,8 @@ public class qcrtsqlfld extends DBClassBuilder {
 
 		String checkSql = "delete from qcrtsqlfld ";
 
-		if (Keyfieldnameu != "") {
-			checkSql = checkSql + " Where fieldnameu=?";
-		}
-
 		checkStmt = connection.prepareStatement(checkSql);
 
-		int counter = 1;
-
-		if (Keyfieldnameu != "") {
-			checkStmt.setString(counter++, Keyfieldnameu);
-		}
 
 		int record = checkStmt.executeUpdate();
 
@@ -593,226 +347,6 @@ public class qcrtsqlfld extends DBClassBuilder {
 		}
 	}
 
-//***********File Read Equal Section******************************************//
-
-	public boolean readEqualFirst() throws SQLException {
-
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (Keyfieldnameu == "") {
-			System.err.println("Key fields must be set.");
-			return false;
-		}
-
-
-		String checkSql = "Select * from qcrtsqlfld";
-		checkSql = checkSql + " Where fieldnameu=?";
-		checkSql = checkSql + " Order By fieldnameu";
-
-		checkStmt = connection.prepareStatement(checkSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		int counter = 1;
-			checkStmt.setString(counter++, Keyfieldnameu);
-
-		results = checkStmt.executeQuery();
-
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		if (results.first()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
-	public boolean readEqualFirstqcrtsqlfl1 () throws SQLException {
-
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (Keyfieldnamel == "") {
-			System.err.println("Key fields must be set.");
-			return false;
-		}
-
-
-		String checkSql = "Select * from qcrtsqlfld";
-		checkSql = checkSql + " Where fieldnamel=?";
-		checkSql = checkSql + " Order By fieldnamel";
-
-		checkStmt = connection.prepareStatement(checkSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		int counter = 1;
-			checkStmt.setString(counter++, Keyfieldnamel);
-
-		results = checkStmt.executeQuery();
-
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		if (results.first()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
-	public boolean readEqualNext() throws SQLException {
-
-		if (!getReadeOK()) {
-			System.err.println("Record not retrieved.");
-			return false;
-		}
-
-		if (results == null) return false;
-
-		if (results.next()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
-	public boolean readEqualLast() throws SQLException {
-
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (Keyfieldnameu == "") {
-			System.err.println("Key fields must be set.");
-			return false;
-		}
-
-
-		String checkSql = "Select * from qcrtsqlfld";
-		checkSql = checkSql + " Where fieldnameu=?";
-		checkSql = checkSql + " Order By fieldnameu";
-
-		checkStmt = connection.prepareStatement(checkSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-		int counter = 1;
-			checkStmt.setString(counter++, Keyfieldnameu);
-
-		results = checkStmt.executeQuery();
-
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		if (results.last()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
-	public boolean readEqualLastqcrtsqlfl1 () throws SQLException {
-
-		setReadeOK(false);
-		setUpdateOK(false);
-		setRecordFound(false);
-
-		if (Keyfieldnamel == "") {
-			System.err.println("Key fields must be set.");
-			return false;
-		}
-
-
-		String checkSql = "Select * from qcrtsqlfld";
-		checkSql = checkSql + " Where fieldnamel=?";
-		checkSql = checkSql + " Order By fieldnamel";
-
-		checkStmt = connection.prepareStatement(checkSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-
-		int counter = 1;
-			checkStmt.setString(counter++, Keyfieldnamel);
-
-		results = checkStmt.executeQuery();
-
-		SQLWarning warning = results.getWarnings();
-		printSQLWarnings(warning);
-		warning = checkStmt.getWarnings();
-		printSQLWarnings(warning);
-
-		if (results.last()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
-	public boolean readEqualPrevious() throws SQLException {
-
-		if (!getReadeOK()) {
-			System.err.println("Record not retrieved.");
-			return false;
-		}
-
-		if (results == null) return false;
-
-		if (results.previous()) {
-			updateAllFromResults();
-			setRecordFound(true);
-			setUpdateOK(true);
-			setKeyFields();
-			setReadeOK(true);
-			return true;
-		} else {
-			setReadeOK(false);
-			setUpdateOK(false);
-			setRecordFound(false);
-			return false;
-		}
-	}
-
 //***********Record Set Results Section***************************************//
 
 	private void updateAllFromResults() throws SQLException {
@@ -830,14 +364,6 @@ public class qcrtsqlfld extends DBClassBuilder {
 
 	public String toString() {
 		return "qcrtsqlfld [fieldnameu=" + fieldnameu.trim() + ", fieldnamel=" + fieldnamel.trim() + "]";
-	}
-
-	public String toStringKey() {
-		return "qcrtsqlfld [fieldnameu=" + fieldnameu + "]";
-	}
-
-	public void setKeyFieldsqcrtsqlfl1(String fieldnamel) {
-		setKeyfieldnamel(fieldnamel);
 	}
 
 //***********Utility Section**************************************************//

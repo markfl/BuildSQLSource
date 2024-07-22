@@ -64,8 +64,7 @@ public class BuildUploadList {
 		}
 		
 		try (BufferedReader dirin = new BufferedReader(new 
-				InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\liblist"), "UTF-8"))) {
-			String library;
+				InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\liblist"), "UTF-8"))) {			String library;
 			while ((library  = dirin.readLine()) != null ) {
 				PreparedStatement insertStmt = connMSSQLLibList.prepareStatement(insertSql2);
 				insertStmt.setString(1, company);
@@ -83,7 +82,9 @@ public class BuildUploadList {
 						insertStmt = connMSSQLLibList.prepareStatement(insertSql1);
 						insertStmt.setString(1, library);
 						insertStmt.setString(2, fileName);
-						double counterTotal = cb.getRecordCount(company, library, fileName);
+						String fileInputStream = new String();
+						fileInputStream = "C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\" + fileName + ".csv";
+						double counterTotal = cb.getRecordCount(company, library, fileName, fileInputStream);
 						insertStmt.setInt(3, (int) counterTotal);
 						insertStmt.executeUpdate();
 						insertStmt = connMSSQLLibList.prepareStatement(insertSql3);
