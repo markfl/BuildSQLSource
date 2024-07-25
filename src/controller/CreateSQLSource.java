@@ -64,6 +64,8 @@ public class CreateSQLSource {
 		int tablesCreated = 0;
 		int viewsCreated = 0;
 		int indexesCreated = 0;
+		int libCount = 0;
+		int currentCount = 0;
 		
 		setFromLibrary(fromLibrary);
 		setCompany(company);
@@ -84,24 +86,35 @@ public class CreateSQLSource {
 		cn = new CheckName(connLibrary);
 		
 		String companySql = new String();
-		if (includeLibrary.isEmpty())
+		String countSQL = new String();
+		if (includeLibrary.isEmpty()) {
 			companySql = "Select * from " + libraryList
 					   + " Where runoption = 'y'"
 					   + " Order by sequence, library";
-		else
+			countSQL = "Select count(*) as numberOfRecords from " + libraryList
+					   + " Where runoption = 'y'";
+		} else {
 			companySql = "Select * from " + libraryList
 					   + " Where library = '" + includeLibrary + "'";
+		}
 		try {
 			
-			PreparedStatement checkStmt = connLibrary.prepareStatement(companySql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-			ResultSet resultsSelect = checkStmt.executeQuery();
-			while (resultsSelect.next()) {
+			PreparedStatement checkStmt1 = connLibrary.prepareStatement(countSQL);;
+			ResultSet resultsSelect1 = checkStmt1.executeQuery();
+			resultsSelect1.next();
+			libCount = resultsSelect1.getInt(1);
+			if (libCount > 0) {
+				System.out.println(libCount + " libraries to build." );
+			}
+			PreparedStatement checkStmt2 = connLibrary.prepareStatement(companySql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			ResultSet resultsSelect2 = checkStmt2.executeQuery();
+			while (resultsSelect2.next()) {
 				Boolean firstFile = true;
 				filesSoFarTables = new ArrayList<String>();
 				filesSoFarViews = new ArrayList<String>();
 				filesSoFarIndexs = new ArrayList<String>();
-				String libraryName = resultsSelect.getString(3).trim().toLowerCase();
-				String origLibraryName = resultsSelect.getString(4).trim().toLowerCase();
+				String libraryName = resultsSelect2.getString(3).trim().toLowerCase();
+				String origLibraryName = resultsSelect2.getString(4).trim().toLowerCase();
 				libraryName = cn.checkFieldName(libraryName);
 				currentLibrary = libraryName;
 				tablesCreated += createTable(origLibraryName, firstFile);
@@ -114,6 +127,8 @@ public class CreateSQLSource {
 					viewsCreated += createNewView(origLibraryName, viewsCreated, firstFile);
 				indexesCreated += createIndex(origLibraryName, firstFile);
 				firstFile = false;
+				currentCount += 1;
+				System.out.println(currentCount + " libraries created. " + (libCount - currentCount) + " to go." );
 			}
 			WriteCreateSQLTable("Create", "Drop");
 			WriteCreateSQLView("View", "DropView");

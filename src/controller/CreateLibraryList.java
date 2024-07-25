@@ -461,7 +461,17 @@ public class CreateLibraryList {
 						insertStmt.setInt(1, 999);
 						insertStmt.setString(2, "n");
 						currentSequence = 999;
-						currentRunOption = false;	
+						currentRunOption = false;
+					} else if (libraryName.equals("qs36f")) {
+						if (fromLibrary.equals("cohere")) {
+							insertStmt.setInt(1, 1);
+							currentSequence = 1;
+							insertStmt.setString(2, "y");
+							currentRunOption = true;	
+						} else {
+							insertStmt.setInt(1, 21);
+							currentSequence = 21;
+						}
 					} else if (libraryName.length() >= 5 && libraryName.substring(0, 5).equals("qs36f") && fromLibrary.equals("follett")) {
 							insertStmt.setInt(1, 21);
 							currentSequence = 21;
@@ -516,7 +526,7 @@ public class CreateLibraryList {
 						insertStmt.setInt(1, 8);
 						currentSequence = 8;
 					} else if(libraryName.length() >= 5 && libraryName.substring(0, 5).equals("dbu11")) {
-						if (fromLibrary.equals("Cohere")) {
+						if (fromLibrary.equals("cohere")) {
 							insertStmt.setInt(1, 8);
 							currentSequence = 8;
 						} else if (fromLibrary.equals("res")) {
@@ -527,7 +537,7 @@ public class CreateLibraryList {
 							currentSequence = 41;
 						}
 					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("dbu")) {
-						if (fromLibrary.equals("Cohere")) {
+						if (fromLibrary.equals("cohere")) {
 							insertStmt.setInt(1, 9);
 							currentSequence = 9;
 						} else if (fromLibrary.equals("res")) {
@@ -708,9 +718,6 @@ public class CreateLibraryList {
 					insertStmt.setInt(1, 998);
 					currentSequence = 998;
 				}
-				if (libraryName.equals("mmexamples")) {
-					System.out.println(libraryName);
-				}
 				PreparedStatement checkStmt4;
 				checkStmt4 = connLibListMSSQL.prepareStatement(selectSql4);
 				checkStmt4.setString(1, fromLibrary);
@@ -735,8 +742,11 @@ public class CreateLibraryList {
 							}
 						}
 						if (currentSequence <100) {
-							currentSequence += 100;
-							insertStmt.setInt(1, currentSequence);
+							if (fromLibrary.equals("cohere") && libraryName.equals("qs36f")) {
+							} else {
+								currentSequence += 100;
+								insertStmt.setInt(1, currentSequence);
+							}
 						}
 					}
 				}
