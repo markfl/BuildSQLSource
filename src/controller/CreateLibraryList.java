@@ -91,7 +91,6 @@ public class CreateLibraryList {
 					}
 					resultsSelect3.close();
 					checkStmt3.close();
-					
 					// Follett specific
 					if (libraryName.equals("mm4r6lib")) {
 						insertStmt.setInt(1, 2);
