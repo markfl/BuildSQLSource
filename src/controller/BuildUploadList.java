@@ -34,15 +34,19 @@ public class BuildUploadList {
 		String fileListFile = company + "uploadfilelist";
 		String liblist = company + "liblist";
 		String resequence = company + "liblistreseq";
+		
 		String deleteSql1 = "delete from " + fileListFile;
 		String deleteSql2 = "delete from rawdatasource where company = ?";
 		String deleteSql3 = "delete from rawdatafiles where company = ?";
+		String deleteSql4 = "delete from LibrariesToCopy where company = ?";
 		String insertSql1 = "insert into " + fileListFile + " (library, filename, recordcount) "
 		 		 + "values (?, ?, ?)";
 		String insertSql2 = "insert into rawdatasource (company, library, longlibrary, datadirectory) "
 		 		 + "values (?, ?, ?, ?)";
 		String insertSql3 = "insert into rawdatafiles (company, library, longlibrary, datadirectory, filename, longfilename, recordcount) "
 		 		 + "values (?, ?, ?, ?, ?, ?, ?)";
+		String insertSql4 = "insert into LibrariesToCopy (company, library) "
+		 		 + "values (?, ?)";
 		String updateSql1 = "update " + liblist + " set runoption = ? where library = ?"; 
 		String updateSql2 = "update " + resequence + " set runoption = ? where library = ?";
 		
@@ -58,6 +62,10 @@ public class BuildUploadList {
 			deleteStmt = connMSSQLLibList.prepareStatement(deleteSql3);
 			deleteStmt.setString(1, company);
 			deleteStmt.executeUpdate();
+			System.out.println("Clearing LibrariesToCopy");
+			deleteStmt = connMSSQLLibList.prepareStatement(deleteSql4);
+			deleteStmt.setString(1, company);
+			deleteStmt.executeUpdate();
 			deleteStmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -71,6 +79,10 @@ public class BuildUploadList {
 				insertStmt.setString(2, library);
 				insertStmt.setString(3, company + "_" + library);
 				insertStmt.setString(4, library);
+				insertStmt.executeUpdate();
+				insertStmt = connMSSQLLibList.prepareStatement(insertSql4);
+				insertStmt.setString(1, company);
+				insertStmt.setString(2, library);
 				insertStmt.executeUpdate();
 				try (BufferedReader in = new BufferedReader(new 
 						InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\filestoread.txt"), "UTF-8"))) {

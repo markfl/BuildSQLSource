@@ -15,7 +15,7 @@ public class CreateLibraryList {
 		CheckTime ct = new CheckTime();
 		
 		String fromLibrary = args[0];
-		String company = fromLibrary + "liblist";
+		String companyliblist = fromLibrary + "liblist";
 		String resequence = fromLibrary + "liblistreseq";
 		String companyFile = fromLibrary + "file";
 		String companyFileList = fromLibrary + "filelist";
@@ -35,10 +35,10 @@ public class CreateLibraryList {
 		
 		CheckName cn = new CheckName(connLibListMSSQL);
 		
-		String deleteSql1 = "delete from " + company;
+		String deleteSql1 = "delete from " + companyliblist;
 		String deleteSql2 = "delete from " + resequence;
 		String selectSql1 = "Select * from " + fromLibrary + " Order by library";
-		String insertSql1 = "insert into " + company + " (sequence, runoption, library, origlibrary) "
+		String insertSql1 = "insert into " + companyliblist + " (sequence, runoption, library, origlibrary) "
 						 + "values (?, ?, ?, ?)";
 		String selectSql2 = "select count(*) as numberOfRecords from qdspfdbas"
 				 + " Where atlib = ? And atfila = '*PHY' And atdtat = 'D'";
@@ -757,7 +757,7 @@ public class CreateLibraryList {
 			} // end while
 			resultsSelect.close();
 			checkStmt.close();
-			BuildCompanyFileList(company, companyFile, companyFileList, connLibListMSSQL);
+			BuildCompanyFileList(companyliblist, companyFile, companyFileList, connLibListMSSQL);
 			dbLibListMSSQL.closeConnection(connLibListMSSQL);;
 			dbFloresCompanyMSSQL.closeConnection(connFloresCompanyMSSQL);
 			connLibListMSSQL.close();
@@ -770,7 +770,7 @@ public class CreateLibraryList {
 		System.out.println(returnString);
 	}
 	
-	private static void BuildCompanyFileList(String company, String companyFile, String companyFileList, Connection connLibListMSSQL ) {
+	private static void BuildCompanyFileList(String companyliblist, String companyFile, String companyFileList, Connection connLibListMSSQL ) {
 		
 		String selectSql = "Select * from " + companyFile + " Order by library, filename";
 		String deleteSql = "delete from " + companyFileList;
@@ -790,12 +790,15 @@ public class CreateLibraryList {
 			String saveLibraryName = new String();
 			while (resultsSelect.next()) {
 				libraryName = resultsSelect.getString(1).trim().toLowerCase();
+				if (libraryName.trim().equals("acom")) {
+					System.out.println(libraryName);
+				}
 				fileName = resultsSelect.getString(2).trim().toLowerCase();
 
 				if (saveLibraryName.isEmpty() || !saveLibraryName.equals(libraryName)) {
 					runOption = "n";
 					String checkSql = new String();				
-					checkSql = "Select * from " + company
+					checkSql = "Select * from " + companyliblist
 							 + " Where library = ?";
 					chainLibrary = libraryName;
 					PreparedStatement checkStmt4 = connLibListMSSQL.prepareStatement(checkSql);
