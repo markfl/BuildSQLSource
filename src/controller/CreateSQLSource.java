@@ -17,6 +17,7 @@ import model.MsSQL;
 public class CreateSQLSource {
 	
 	static StringBuilder create = new StringBuilder();
+	static StringBuilder alterCreate = new StringBuilder();
 	static StringBuilder drop = new StringBuilder();
 	static StringBuilder view = new StringBuilder();
 	static StringBuilder dropview = new StringBuilder();
@@ -98,11 +99,13 @@ public class CreateSQLSource {
 					   + " Where library = '" + includeLibrary + "'";
 		}
 		try {
+			if (includeLibrary.isEmpty()) {
+				PreparedStatement checkStmt1 = connLibrary.prepareStatement(countSQL);;
+				ResultSet resultsSelect1 = checkStmt1.executeQuery();
+				resultsSelect1.next();
+				libCount = resultsSelect1.getInt(1);
+			} else libCount = 1;
 			
-			PreparedStatement checkStmt1 = connLibrary.prepareStatement(countSQL);;
-			ResultSet resultsSelect1 = checkStmt1.executeQuery();
-			resultsSelect1.next();
-			libCount = resultsSelect1.getInt(1);
 			if (libCount > 0) {
 				System.out.println(libCount + " libraries to build." );
 			}
@@ -131,6 +134,7 @@ public class CreateSQLSource {
 				System.out.println(currentCount + " libraries created. " + (libCount - currentCount) + " to go." );
 			}
 			WriteCreateSQLTable("Create", "Drop");
+			WriteAlterCreateSQLTable();
 			WriteCreateSQLView("View", "DropView");
 			WriteCreateSQLIndex("Index");
 			System.out.println("Program completed normally, " + tablesCreated + " create table scripts created.");
@@ -934,11 +938,13 @@ public class CreateSQLSource {
 	static public void buildSQL(String physicalFileName, String physicalLibraryName, Collection<ArrayList<String>> fields, Boolean firstFile) {
 		
 		String lineCreate = new String();
+		String lineAlter = new String();
 		String lineDrop = new String();
 		
 		if (firstFile) {
 			if (db.equals("mssql")) {
 				lineCreate += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
+				lineAlter += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 				lineDrop += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 			}
 		}
@@ -1003,17 +1009,21 @@ public class CreateSQLSource {
 				lineCreate += fieldName.trim() + " " + fieldType.trim();
 			}
 			
+			fieldText = fieldText.replace("'", " ");
+			fieldText = fieldText.replace("\\", " ");
 			if (count1 < numberOfFields) {
 				if (fieldText.isEmpty()) {
 					lineCreate += ",\n";
 				} else {
 					lineCreate += ", -- " + fieldText + "\n";
+					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'user', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\n";
 				}
 			} else {
 				if (fieldText.isEmpty()) {
 					lineCreate += "\n";
 				} else {
 					lineCreate += " -- " + fieldText + "\n";
+					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'user', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\n";
 				}
 			}
 		}
@@ -1022,8 +1032,9 @@ public class CreateSQLSource {
 			lineCreate += "go";
 		}
 		
-		WriteJavaSourceLineCreate(lineCreate);
-		WriteJavaSourceLineDrop(lineDrop);
+		if (!lineCreate.isEmpty()) WriteJavaSourceLineCreate(lineCreate);
+		if (!lineAlter.isBlank()) WriteJavaSourceLineAlter(lineAlter);
+		if (!lineDrop.isEmpty()) WriteJavaSourceLineDrop(lineDrop);
     }
 
 	static public Boolean buildSelectView(String physicalFileName, String fileName, String libraryName, Collection<ArrayList<String>> fields, Boolean firstFile) {
@@ -1646,6 +1657,10 @@ public class CreateSQLSource {
 	private static void WriteJavaSourceLineCreate(String line) {
 		create.append(line + "\n");
 	}
+
+	private static void WriteJavaSourceLineAlter(String line) {
+		alterCreate.append(line + "\n");
+	}
 	
 	private static void WriteJavaSourceLineDrop(String line) {
 		drop.append(line);
@@ -1687,6 +1702,20 @@ public class CreateSQLSource {
 		}
 	}
 	
+	
+	private static void WriteAlterCreateSQLTable() {
+		
+		try (FileOutputStream outCreate = new FileOutputStream(new File("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + getCompany() + "\\sql\\alter.sql"))) {
+			outCreate.write(alterCreate.toString().getBytes());
+			alterCreate.setLength(0);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+
 	private static void WriteCreateSQLView(String createString, String dropString) {
 		
 		try (FileOutputStream outCreate = new FileOutputStream(new File("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + getCompany() + "\\sql\\" + createString + ".sql"))) {
