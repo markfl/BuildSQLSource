@@ -691,7 +691,31 @@ public class CreateLibraryList {
 						insertStmt.setInt(1, 2);
 						insertStmt.setString(2, "n");
 						currentSequence = 2;
-						currentRunOption = false;	
+						currentRunOption = false;
+						
+					// banner specific
+					} else if(libraryName.equals("idsdata")) {
+						insertStmt.setInt(1, 1);
+						currentSequence = 1;
+					} else if(libraryName.equals("idsuser")) {
+						insertStmt.setInt(1, 2);
+						currentSequence = 2;
+					} else if(libraryName.equals("idsilledi")) {
+						insertStmt.setInt(1, 3);
+						currentSequence = 3;
+					} else if(libraryName.equals("idsmods")) {
+						insertStmt.setInt(1, 4);
+						currentSequence = 4;
+					} else if(libraryName.equals("idspgmr")) {
+						insertStmt.setInt(1, 5);
+						currentSequence = 5;
+					} else if(libraryName.equals("idspruapp")) {
+						insertStmt.setInt(1, 6);
+						currentSequence = 6;
+					} else if(libraryName.equals("idsurdta")) {
+						insertStmt.setInt(1, 7);
+						currentSequence = 7;
+						
 					// Misc
 					} else if(libraryName.equals("qgpl")) {
 						insertStmt.setInt(1, 30);

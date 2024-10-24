@@ -48,6 +48,8 @@ public class CreateSQLSource {
 	private static Boolean hasSubStringField;
 	private static Boolean isJoinFile;
 	private static CheckName cn;
+	private static String PhysicalFileInd = "P";
+	private static String LogicalFileInd = "L";
 
 	public static void main(String[] args) {
 		
@@ -198,7 +200,7 @@ public class CreateSQLSource {
 			   					}
 			   				}
 			   				if (ableTORun) {
-					   			fields = getFieldData(origPhysicalFileName, library, fields);
+					   			fields = getFieldData(origPhysicalFileName, library, fields, PhysicalFileInd);
 					   			if (fields.size() > 0) {
 						    		buildSQL(physicalFileName, library, fields, firstFile);
 						    		fields = new ArrayList<ArrayList<String>>();
@@ -283,7 +285,7 @@ public class CreateSQLSource {
 											if (numberOfRecords > 1) {
 												setHasConcatField(false);
 												setHasSubStringField(false);
-												fields = getFieldData(fileName, libraryName, fields);
+												fields = getFieldData(fileName, libraryName, fields, PhysicalFileInd);
 												if (buildSelectView(physicalFileName, fileName, libraryName, fields, firstFile)) {
 													System.out.println("Select View SQL Script from library " + libraryName.trim() + " file " + fileName.trim() + " added.");
 													firstFile = false;
@@ -405,37 +407,75 @@ public class CreateSQLSource {
 		
 		String selectSql1 = "Select whrfi from qdspdbr "
 				 + "Where whrefi = ? And whreli = ?";
+		String countSQL = "Select count(*) as numberOfRecords from qdspdbr "
+				 + "Where whrefi = ? And whreli = ?";
 		
 		for (String fileName : filesNotIncludedInViews) {
 			PreparedStatement checkStmt1;
 			try {
-				checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-				checkStmt1.setString(1, fileName);
-				checkStmt1.setString(2, libraryName);
-				ResultSet resultsSelect1 = checkStmt1.executeQuery();
-				if (resultsSelect1.next()) {
-					String physicalFileName = resultsSelect1.getString(1).trim().toLowerCase();
-					filesSoFarTableName = getCompany() + "_" + libraryName + "." + physicalFileName.trim();
-					if (filesSoFarTables.contains(filesSoFarTableName)) {
-						if (checkFileName(fileName.trim())) {
-							filesSoFarViewName = getCompany() + "_" + libraryName + "." + fileName.trim();
-							if (!filesSoFarViews.contains(fileName.trim())) {
-								fields = new ArrayList<ArrayList<String>>();
-								fields = getFieldData(fileName, libraryName, fields);
-								setHasConcatField(false);
-								setHasSubStringField(false);
-								if (buildNewView(physicalFileName, fileName, libraryName, fields, firstFile)) {
-									System.out.println("Logical View SQL Script from library " + libraryName.trim() + " file " + fileName.trim() + " added.");
-									firstFile = false;
-									sqlScriptsCreated++;
-									//filesSoFarViews.add(fileName.trim());
+				PreparedStatement countStmt = connMSSQL.prepareStatement(countSQL);
+				countStmt.setString(1, fileName);
+				countStmt.setString(2, libraryName);
+				ResultSet resultsCount = countStmt.executeQuery();
+				resultsCount.next();
+				int libCount = resultsCount.getInt(1);
+				if (libCount == 1) {
+					checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					checkStmt1.setString(1, fileName);
+					checkStmt1.setString(2, libraryName);
+					ResultSet resultsSelect1 = checkStmt1.executeQuery();
+					if (resultsSelect1.next()) {
+						String physicalFileName = resultsSelect1.getString(1).trim().toLowerCase();
+						filesSoFarTableName = getCompany() + "_" + libraryName + "." + physicalFileName.trim();
+						if (filesSoFarTables.contains(filesSoFarTableName)) {
+							if (checkFileName(fileName.trim())) {
+								filesSoFarViewName = getCompany() + "_" + libraryName + "." + fileName.trim();
+								if (!filesSoFarViews.contains(fileName.trim())) {
+									fields = new ArrayList<ArrayList<String>>();
+									fields = getFieldData(fileName, libraryName, fields, PhysicalFileInd);
+									setHasConcatField(false);
+									setHasSubStringField(false);
+									if (buildNewView(physicalFileName, fileName, libraryName, fields, firstFile)) {
+										System.out.println("Logical View SQL Script from library " + libraryName.trim() + " file " + fileName.trim() + " added.");
+										firstFile = false;
+										sqlScriptsCreated++;
+										filesSoFarViews.add(fileName.trim());
+									}
 								}
 							}
 						}
 					}
+					resultsSelect1.close();
+					checkStmt1.close();
+				} else {
+					checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					checkStmt1.setString(1, fileName);
+					checkStmt1.setString(2, libraryName);
+					ResultSet resultsSelect1 = checkStmt1.executeQuery();
+					if (resultsSelect1.next()) {
+						String physicalFileName = resultsSelect1.getString(1).trim().toLowerCase();
+						filesSoFarTableName = getCompany() + "_" + libraryName + "." + physicalFileName.trim();
+						if (filesSoFarTables.contains(filesSoFarTableName)) {
+							if (checkFileName(fileName.trim())) {
+								filesSoFarViewName = getCompany() + "_" + libraryName + "." + fileName.trim();
+								if (!filesSoFarViews.contains(fileName.trim())) {
+									fields = new ArrayList<ArrayList<String>>();
+									fields = getFieldData(fileName, libraryName, fields, LogicalFileInd);
+									setHasConcatField(false);
+									setHasSubStringField(false);
+									if (buildNewView(physicalFileName, fileName, libraryName, fields, firstFile)) {
+										System.out.println("Logical View SQL Script from library " + libraryName.trim() + " file " + fileName.trim() + " added.");
+										firstFile = false;
+										sqlScriptsCreated++;
+										filesSoFarViews.add(fileName.trim());
+									}
+								}
+							}
+						}
+					}
+					resultsSelect1.close();
+					checkStmt1.close();
 				}
-				resultsSelect1.close();
-				checkStmt1.close();
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}	
@@ -578,40 +618,50 @@ public class CreateSQLSource {
 		return fieldName;
 	}
 	
-	static public Collection<ArrayList<String>> getFieldData(String fileName, String libraryName, Collection<ArrayList<String>> fields) {
+	static public Collection<ArrayList<String>> getFieldData(String fileName, String libraryName, Collection<ArrayList<String>> fields, String fileType) {
 		
 		Collection<String> currentFields = new ArrayList<String>();
-		String selectSql = "Select whfile, whlib, whflde, whfldb, whfldd, whfldt, whfldp, whftxt, whjref, concat, whfldi, whmap, whmaps, whmapl "
-						 + "From qdbasedict Where whfile = ? And whlib = ? "
-						 + "Order by whfobo";
+		String selectSql1 = "Select whfile, whlib, whflde, whfldb, whfldd, whfldt, whfldp, whftxt, whjref, concat, whfldi, whmap, whmaps, whmapl, whname "
+						  + "From qdbasedict Where whfile = ? And whlib = ? "
+						  + "Order by whname, whfobo";
+		String selectSql2 = "Select apbof From qdspfdacc Where aplib = ? And apbolf = ?";
 		
 		try {
-			PreparedStatement checkStmt = connMSSQL.prepareStatement(selectSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-		    checkStmt.setString(1, fileName);
-		    checkStmt.setString(2, libraryName);
-		    ResultSet resultsSelect = checkStmt.executeQuery();
+			PreparedStatement checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+		    checkStmt1.setString(1, fileName);
+		    checkStmt1.setString(2, libraryName);
+		    ResultSet resultsSelect1 = checkStmt1.executeQuery();
 		    boolean firstRecord = true;
-		    while (resultsSelect.next()) {
-		    	fileName = resultsSelect.getString(1);
-		    	libraryName = resultsSelect.getString(2);
-		    	String fieldName = resultsSelect.getString(3);
+		    while (resultsSelect1.next()) {
+		    	fileName = resultsSelect1.getString(1);
+		    	libraryName = resultsSelect1.getString(2);
+		    	String fieldName = resultsSelect1.getString(3);
 				firstRecord = false;
 				if (!fieldName.trim().equals("QZG0000031")) {
-			    	libraryName = resultsSelect.getString(2);
-			    	fieldName = resultsSelect.getString(3);
+			    	libraryName = resultsSelect1.getString(2);
+			    	fieldName = resultsSelect1.getString(3);
 			    	fieldName = cn.checkFieldName(fieldName.trim().toLowerCase());
-			    	int fieldSizeAlpha = resultsSelect.getInt(4);
-			    	int fieldSizeNumeric = resultsSelect.getInt(5);
-					String fieldType = resultsSelect.getString(6);
-					int decimal = resultsSelect.getInt(7);
-					String fieldText = resultsSelect.getString(8);
-					int joinReference = resultsSelect.getInt(9);
-					String concat = resultsSelect.getString(10);
-					String interalFieldName = resultsSelect.getString(11);
+			    	int fieldSizeAlpha = resultsSelect1.getInt(4);
+			    	int fieldSizeNumeric = resultsSelect1.getInt(5);
+					String fieldType = resultsSelect1.getString(6);
+					int decimal = resultsSelect1.getInt(7);
+					String fieldText = resultsSelect1.getString(8);
+					int joinReference = resultsSelect1.getInt(9);
+					String concat = resultsSelect1.getString(10);
+					String interalFieldName = resultsSelect1.getString(11);
 					interalFieldName = cn.checkFieldName(interalFieldName.trim().toLowerCase());
-					String map = resultsSelect.getString(12);
-					int substringStart = resultsSelect.getInt(13);
-					int substringLength = resultsSelect.getInt(14);
+					String map = resultsSelect1.getString(12);
+					int substringStart = resultsSelect1.getInt(13);
+					int substringLength = resultsSelect1.getInt(14);
+					String recordFormat = resultsSelect1.getString(15);
+					PreparedStatement checkStmt2 = null;
+					ResultSet resultsSelect2 = null;
+					if (fileType.equals(LogicalFileInd)) {
+						checkStmt2 = connMSSQL.prepareStatement(selectSql2, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+					    checkStmt2.setString(1, libraryName);
+					    checkStmt2.setString(2, recordFormat);
+					    resultsSelect2 = checkStmt2.executeQuery();
+					}
 					currentFields.add(fileName);
 					currentFields.add(libraryName);
 					currentFields.add(fieldName);
@@ -626,12 +676,21 @@ public class CreateSQLSource {
 					currentFields.add(map.trim());
 					currentFields.add(Integer.toString(substringStart));
 					currentFields.add(Integer.toString(substringLength));
+					currentFields.add(recordFormat.trim());
+					if (fileType.equals(LogicalFileInd)) {
+						if (resultsSelect2.next()) {
+							String physicalFileName = resultsSelect2.getString(1);
+							currentFields.add(physicalFileName.trim());
+						}
+						resultsSelect2.close();
+					    checkStmt2.close();
+					}
 					fields = getFileFields(firstRecord, currentFields, fields);
 					currentFields = new ArrayList<String>();
 				}
 		    }
-		    resultsSelect.close();
-		    checkStmt.close();
+		    resultsSelect1.close();
+		    checkStmt1.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
@@ -649,9 +708,9 @@ public class CreateSQLSource {
 						  + "from qdspfdjoin "
 						  + "Where jnfile = ? And jnlib = ? "
 						  + "And jnjdsq = ' ' And jnjfrm > 0";
-		String selectSql2 = "Select whfile, whlib, whflde, whfldb, whfldd, whfldt, whfldp, whftxt, whjref, concat, whfldi, whmap, whmaps, whmapl "
+		String selectSql2 = "Select whfile, whlib, whflde, whfldb, whfldd, whfldt, whfldp, whftxt, whjref, concat, whfldi, whmap, whmaps, whmapl, whname "
 						  + "from qdbasedict Where whfile = ? And whlib = ? "
-						  + "Order by whfobo";
+						  + "Order by whname, whfobo";
 		try {
 			PreparedStatement checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 		    checkStmt1.setString(1, fileName);
@@ -709,6 +768,7 @@ public class CreateSQLSource {
 					String map = resultsSelect2.getString(12);
 					int substringStart = resultsSelect2.getInt(13);
 					int substringLength = resultsSelect2.getInt(14);
+					String recordFormat = resultsSelect2.getString(15);
 					if (joinReference <= filesJoined.size())
 						fileName = filesJoined.get(joinReference-1);
 					currentFields.add(fileName.trim());
@@ -725,6 +785,7 @@ public class CreateSQLSource {
 					currentFields.add(map.trim());
 					currentFields.add(Integer.toString(substringStart));
 					currentFields.add(Integer.toString(substringLength));
+					currentFields.add(recordFormat.trim());
 					fields = getFileFields(firstRecord, currentFields, fields);
 					currentFields = new ArrayList<String>();
 				}
@@ -754,6 +815,8 @@ public class CreateSQLSource {
 		String map = new String();
 		int substringStart = 0;
 		int substringLength = 0;
+		String recordFormat = new String();
+		String physicalFile = new String();
 		int count = 0;
 		for (String field : results) {
 			count++;
@@ -800,6 +863,12 @@ public class CreateSQLSource {
 					break;
 				case 14:
 					substringLength = Integer.parseInt(field);
+					break;
+				case 15:
+					recordFormat = field.trim();
+					break;
+				case 16:
+					physicalFile = field.trim();
 					break;
 			}
 		}
@@ -931,6 +1000,8 @@ public class CreateSQLSource {
 		fieldList.add(map);
 		fieldList.add(Integer.toString(substringStart));
 		fieldList.add(Integer.toString(substringLength));
+		fieldList.add(recordFormat);
+		fieldList.add(physicalFile);
 		fields.add((ArrayList<String>) fieldList);
     	return fields;
     }
@@ -1016,14 +1087,14 @@ public class CreateSQLSource {
 					lineCreate += ",\n";
 				} else {
 					lineCreate += ", -- " + fieldText + "\n";
-					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'user', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\n";
+					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'schema', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\ngo\n";
 				}
 			} else {
 				if (fieldText.isEmpty()) {
 					lineCreate += "\n";
 				} else {
 					lineCreate += " -- " + fieldText + "\n";
-					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'user', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\n";
+					lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldText.trim() + "', 'schema', dbo, 'table', '" + physicalFileName.trim() + "', 'column', " + fieldName.trim() + "\ngo\n";
 				}
 			}
 		}
@@ -1040,6 +1111,7 @@ public class CreateSQLSource {
 	static public Boolean buildSelectView(String physicalFileName, String fileName, String libraryName, Collection<ArrayList<String>> fields, Boolean firstFile) {
 		
 		String lineCreate = new String();
+		String lineAlter = new String();
 		String lineDrop = new String();
 		originalField = new ArrayList<String>();
 		aliasField = new ArrayList<String>();
@@ -1047,6 +1119,7 @@ public class CreateSQLSource {
 		if (firstFile) {
 			if (db.equals("mssql")) {
 				lineCreate += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
+				lineAlter += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 				lineDrop += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 			}
 		}
@@ -1064,6 +1137,7 @@ public class CreateSQLSource {
 			ResultSet resultsSelect = checkStmt.executeQuery();
 			if (resultsSelect.first()) {
 				lineCreate = setViewFields(lineCreate, libraryName, physicalFileName, fileName, fields);
+				lineAlter = setAlterFields(lineAlter, libraryName, physicalFileName, fileName, fields);
 				if (db.equals("mssql")) {
 					lineDrop += "drop view dbo." + fileName.trim()+ "\ngo\n";
 				} else {
@@ -1106,8 +1180,9 @@ public class CreateSQLSource {
 				} else {
 					lineDrop += "drop view " + fileName.trim()+ "\n";
 				}
-				WriteJavaSourceLineView(lineCreate);
-				WriteJavaSourceLineDropView(lineDrop);
+				if (!lineCreate.isBlank()) WriteJavaSourceLineView(lineCreate);
+				if (!lineAlter.isBlank()) WriteJavaSourceLineAlter(lineAlter);
+				if (!lineDrop.isBlank()) WriteJavaSourceLineDropView(lineDrop);
 			} else {
 				resultsSelect.close();
 			    checkStmt.close();
@@ -1125,6 +1200,7 @@ public class CreateSQLSource {
 	static public Boolean buildNewView(String physicalFileName, String fileName, String libraryName, Collection<ArrayList<String>> fields, Boolean firstFile) {
 		
 		String lineCreate = new String();
+		String lineAlter = new String();
 		String lineDrop = new String();
 		originalField = new ArrayList<String>();
 		aliasField = new ArrayList<String>();
@@ -1132,19 +1208,22 @@ public class CreateSQLSource {
 		if (firstFile) {
 			if (db.equals("mssql")) {
 				lineCreate += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
+				lineAlter += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 				lineDrop += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 			}
 		}
 		
 		lineCreate = setViewFields(lineCreate, libraryName, physicalFileName, fileName, fields);
+		lineAlter = setAlterFields(lineAlter, libraryName, physicalFileName, fileName, fields);
 		if (db.equals("mssql")) {
 			lineDrop += "drop view dbo." + fileName.trim()+ "\ngo\n";
+			lineCreate += physicalFileName + ";\ngo\n";
 		} else {
 			lineDrop += "drop view " + fileName.trim()+ "\n";
 		}
-		lineCreate += physicalFileName + ";\ngo\n";
-		WriteJavaSourceLineView(lineCreate);
-		WriteJavaSourceLineDropView(lineDrop);
+		if (!lineCreate.isBlank()) WriteJavaSourceLineView(lineCreate);
+		if (!lineAlter.isBlank()) WriteJavaSourceLineAlter(lineAlter);
+		if (!lineDrop.isBlank()) WriteJavaSourceLineDropView(lineDrop);
 		
 		return true;
 	}
@@ -1152,12 +1231,14 @@ public class CreateSQLSource {
 	static public Boolean buildSelectJoinView(String physicalFileName, String fileName, String libraryName, Collection<ArrayList<String>> fields, Boolean firstFile) {
 		
 		String lineCreate = new String();
+		String lineAlter = new String();
 		String lineDrop = new String();
 		String joinedField = new String();
 		
 		if (firstFile) {
 			if (db.equals("mssql")) {
 				lineCreate += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
+				lineAlter += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 				lineDrop += "USE [" + company + "_" + currentLibrary + "]\ngo\n";
 			}
 		}
@@ -1211,7 +1292,7 @@ public class CreateSQLSource {
 				if (!joinConcat.isEmpty()) {
 					lineCreate += " " + joinFileName + "." + joinConcat + ",\n";
 				} else if (map.equals("Y")) {
-						lineCreate += " substring(" + mapField.trim() + "," + substringStart + "," + substringLength + " as " + joinFieldName + "\n";
+						lineCreate += ",substring(" + mapField.trim() + "," + substringStart + "," + substringLength + " as " + joinFieldName + "\n";
 				} else {
 					lineCreate += " " + joinFileName + "." + joinFieldName + ",\n";
 				}
@@ -1317,15 +1398,17 @@ public class CreateSQLSource {
 				if (db.equals("mssql")) {
 					lineCreate += "go";
 				}
-				WriteJavaSourceLineView(lineCreate);
-				WriteJavaSourceLineDropView(lineDrop);
+				if (!lineCreate.isBlank()) WriteJavaSourceLineView(lineCreate);
+				if (!lineAlter.isBlank()) WriteJavaSourceLineAlter(lineAlter);
+				if (!lineDrop.isBlank()) WriteJavaSourceLineDropView(lineDrop);
 			} else {
 				lineCreate += ";\n";
 				if (db.equals("mssql")) {
 					lineCreate += "go";
 				}
-				WriteJavaSourceLineView(lineCreate);
-				WriteJavaSourceLineDropView(lineDrop);
+				if (!lineCreate.isBlank()) WriteJavaSourceLineView(lineCreate);
+				if (!lineAlter.isBlank()) WriteJavaSourceLineAlter(lineAlter);
+				if (!lineDrop.isBlank()) WriteJavaSourceLineDropView(lineDrop);
 			}
 			resultsSelect.close();
 		    checkStmt.close();
@@ -1336,6 +1419,9 @@ public class CreateSQLSource {
 	}
 	
 	private static String setViewFields(String lineCreate, String libraryName, String physicaFileName, String fileName, Collection<ArrayList<String>> fields) {
+		
+		if (fileName.equals("achkeftl0")) {
+			System.out.println(fileName);		}
 		
 		if (db.equals("mssql")) {
 			lineCreate += "create view dbo." + fileName.trim() + " -- " + libraryName + "\n";
@@ -1350,8 +1436,10 @@ public class CreateSQLSource {
 		}
 		
 		lineCreate += "Select\n";
+		String savePhysicalFile = new String();
 		
 		int count1 = 0;
+		int count3 = 0;
 		int numberOfFields = fields.size();
 		for (ArrayList<String> element : fields) {
 			String fieldName = new String();
@@ -1361,7 +1449,10 @@ public class CreateSQLSource {
 			String mapField = new String();
 			String substringStart = new String();
 			String substringLength = new String();
+			String recordFormat = new String();
+			String multiPhysicalFileName = new String();
 			count1++;
+			count3++;
 			int count2 = 0;
 			for (String field : element) {
 				count2++;
@@ -1386,10 +1477,29 @@ public class CreateSQLSource {
 					case 13:
 						substringLength = field.trim();
 						break;
+					case 14:
+						recordFormat = field.trim();
+						break;
+					case 15:
+						multiPhysicalFileName = field.trim();
+						break;
 				}
 			}
 			
 			if (count1 < numberOfFields) {
+				if (!multiPhysicalFileName.isEmpty()) {
+					if (savePhysicalFile.isEmpty()) {
+						savePhysicalFile = multiPhysicalFileName;
+					} else {
+						if (!multiPhysicalFileName.equals(savePhysicalFile)) {
+							count3 = 1;
+							if (db.equals("mssql")) lineCreate += "From dbo." + savePhysicalFile.toLowerCase() + "\n";
+							else lineCreate += "From " + savePhysicalFile.toLowerCase() + "\n";
+							lineCreate += "Union\nSelect\n";
+							savePhysicalFile = multiPhysicalFileName;
+						}
+					}
+				}
 				allFields.add(fieldName);
 				if (!joinConcat.isEmpty()) {
 					int fi = joinConcat.indexOf("CONCAT(");
@@ -1408,20 +1518,32 @@ public class CreateSQLSource {
 							lineCreate += record.trim().toLowerCase();
 							if (counter < records.length) lineCreate += ", ";
 						}
-						lineCreate += ") as " + fieldName + "\n";
+						lineCreate += ") as " + fieldName + " -- " + fieldDesc + "\n";
 					}
 				} else if (map.equals("Y")) {
-						lineCreate += " substring(" + mapField.trim() + "," + substringStart + "," + substringLength + ") as " + fieldName + ",\n";
+						lineCreate += ",substring(" + mapField.trim() + "," + substringStart + "," + substringLength + ") as " + fieldName + "\n";
 				} else {
 					if (fieldName.equals(mapField)) {
-						if (fieldDesc.isEmpty()) {
-							lineCreate += " " + fieldName + ",\n";
+						if (count3 == 1) {
+							if (fieldDesc.isEmpty()) {
+								lineCreate += " " + fieldName + "\n";
+							} else {
+								lineCreate += " " + fieldName + " -- " + fieldDesc + "\n";
+							}
+
 						} else {
-							lineCreate += " " + fieldName + ", -- " + fieldDesc + "\n";
+							if (fieldDesc.isEmpty()) {
+								lineCreate += "," + fieldName + "\n";
+							} else {
+								lineCreate += "," + fieldName + " -- " + fieldDesc + "\n";
+							}
 						}
 						
 					} else {
-						lineCreate += " " + mapField + " as " + fieldName + ",\n";
+						if (count3 == 1)
+							lineCreate += " " + mapField + " as " + fieldName + " -- " + fieldDesc + "\n";
+						else
+							lineCreate += "," + mapField + " as " + fieldName + " -- " + fieldDesc + "\n";
 						originalField.add(mapField);
 						aliasField.add(fieldName);
 					}
@@ -1452,9 +1574,9 @@ public class CreateSQLSource {
 					lineCreate += " substring(" + mapField.trim() + "," + substringStart + "," + substringLength + ") as " + fieldName + "\n";
 				} else {
 					if (fieldName.equals(mapField)) {
-						lineCreate += " " + fieldName + "\n";
+						lineCreate += "," + fieldName + "\n";
 					} else {
-						lineCreate += " " + mapField + " as " + fieldName + "\n";
+						lineCreate += "," + mapField + " as " + fieldName + "\n";
 						originalField.add(mapField);
 						aliasField.add(fieldName);
 					}	
@@ -1466,6 +1588,29 @@ public class CreateSQLSource {
 		else lineCreate += "From ";
 		
 		return lineCreate;
+	}
+	
+	private static String setAlterFields(String lineAlter, String libraryName, String physicaFileName, String fileName, Collection<ArrayList<String>> fields) {
+		
+		for (ArrayList<String> element : fields) {
+			String fieldName = new String();
+			String fieldDesc = new String();
+			int count = 0;
+			for (String field : element) {
+				count++;
+				switch (count) {
+					case 2:
+						fieldName = field.trim().toLowerCase();
+						break;
+					case 7:
+						fieldDesc = field.trim();
+						break;
+				}
+			}
+			lineAlter += "EXEC sp_addextendedproperty 'MS_Description',  '" + fieldDesc.trim() + "', 'schema', dbo, 'view', '" + fileName.trim() + "', 'column', " + fieldName.trim() + "\ngo\n";
+		}
+		
+		return lineAlter;
 	}
 
 	private static String setViewValues(ResultSet resultsSelect, String lineCreate, String lastField, String lastComp, String lastRule, Boolean needsParam) {
