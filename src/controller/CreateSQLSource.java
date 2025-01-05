@@ -1449,7 +1449,6 @@ public class CreateSQLSource {
 			String mapField = new String();
 			String substringStart = new String();
 			String substringLength = new String();
-			String recordFormat = new String();
 			String multiPhysicalFileName = new String();
 			count1++;
 			count3++;
@@ -1476,9 +1475,6 @@ public class CreateSQLSource {
 						break;
 					case 13:
 						substringLength = field.trim();
-						break;
-					case 14:
-						recordFormat = field.trim();
 						break;
 					case 15:
 						multiPhysicalFileName = field.trim();
