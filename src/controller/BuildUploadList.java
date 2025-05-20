@@ -120,6 +120,27 @@ public class BuildUploadList {
 								setLibrary = "mfgdblib";
 							}
 						}
+						if (company.equals("norplex")) {
+							if (library.equals("amflibg1")) {
+								setLibrary = "amflibg";
+							}
+							if (library.equals("amflibg2")) {
+								setLibrary = "amflibg";
+							}
+							if (library.equals("amflibs1")) {
+								setLibrary = "amflibs";
+							}
+							if (library.equals("amflibs2")) {
+								setLibrary = "amflibs";
+							}
+							if (library.equals("amxlibd1")) {
+								setLibrary = "amxlibd";
+							}
+							if (library.equals("amxlibd2")) {
+								setLibrary = "amxlibd";
+							}
+						}
+						
 						insertStmt.setString(1, company);
 						insertStmt.setString(2, setLibrary);
 						insertStmt.setString(3, company + "_" + setLibrary);

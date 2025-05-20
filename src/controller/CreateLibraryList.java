@@ -771,6 +771,9 @@ public class CreateLibraryList {
 								insertStmt.setInt(1, currentSequence);
 							}
 						}
+						if (fromLibrary.equals("integrative")) {
+								insertStmt.setString(2, "y");
+						}
 					}
 				}
 				resultsSelect4.close();

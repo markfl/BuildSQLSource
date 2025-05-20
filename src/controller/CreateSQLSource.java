@@ -329,11 +329,12 @@ public class CreateSQLSource {
 				 + "And atlib = '" + selectLibrary + "' "
 				 + "And atfile <> 'vrshpa2n' "
 				 + "And atfile <> 'fmpfcn4' "
+				 + "And atfile <> 'yaaorel2' "
 				 + "Order by atlib, atfile";
 		String selectSql2 = "Select whrfi from qdspdbr "
 				 + "Where whrefi = ? And whreli = ?";
 		String selectSql3 = "select count(*) as numberOfRecords from qdspfdjoin "
-				 + "Where jnfile = ? And jnlib = ?";
+				 + "Where jnfile = ? And jnlib = ?" + " And jnjdsq = ' ' And jnjfrm > 0";
 
 		try {	
 			PreparedStatement checkStmt1 = connMSSQL.prepareStatement(selectSql1, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
@@ -595,6 +596,7 @@ public class CreateSQLSource {
 		fieldName = fieldName.replace("%", "_d");
 		fieldName = fieldName.replace("&", "_e");
 		fieldName = fieldName.replace("*", "_f");
+		fieldName = fieldName.replace(".", "_g");
 		
 		try {
 			String checkSql = "select count(*) as numberOfRecords from qcrtsqlfld "

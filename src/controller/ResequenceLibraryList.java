@@ -87,8 +87,11 @@ public class ResequenceLibraryList {
 				resultsstep8.close();
 				stepstmt8.close();
 				PreparedStatement stepstmt3 = connLibListMSSQL.prepareStatement(step3);
-				if (filestocopy == 0)
-					runoption = "n";
+				if (!fromLibrary.equals("integrative")) {
+					if (filestocopy == 0) runoption = "n";
+				} else {
+					runoption = "y";
+				}
 				sequence += 10;
 				stepstmt3.setInt(1, sequence);
 				stepstmt3.setString(2, runoption);
