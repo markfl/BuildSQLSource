@@ -1,6 +1,7 @@
 package controller;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +11,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+
+import org.apache.commons.io.IOUtils;
 
 import model.CheckTime;
 import model.MsSQL;
@@ -90,12 +93,34 @@ public class CreateSQLSource {
 		
 		String companySql = new String();
 		String countSQL = new String();
+		int numberOfLibrariesToCreate = 0;
+		int numberOfLibrariesCreated = 0;
+		int startSeq = 0;
 		if (includeLibrary.isEmpty()) {
-			companySql = "Select * from " + libraryList
-					   + " Where runoption = 'y'"
-					   + " Order by sequence, library";
-			countSQL = "Select count(*) as numberOfRecords from " + libraryList
-					   + " Where runoption = 'y'";
+			String libraryCountSql = "Select * from LibraryCount "
+								   + "Where company = ?";
+			try {
+				PreparedStatement checkStmt = connLibrary.prepareStatement(libraryCountSql);
+				checkStmt.setString(1, company.trim());
+				ResultSet resultsSelect = checkStmt.executeQuery();
+				resultsSelect.next();
+				numberOfLibrariesToCreate = resultsSelect.getInt(2);
+				startSeq = resultsSelect.getInt(3);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			};
+			if (numberOfLibrariesToCreate == 999999) {
+				companySql = "Select * from " + libraryList
+						   + " Where runoption = 'y'"
+						   + " Order by sequence, library";
+				countSQL = "Select count(*) as numberOfRecords from " + libraryList
+					     + " Where runoption = 'y'";
+			} else {
+				companySql = "Select * from " + libraryList
+						   + " Where runoption = 'y' And sequence >= ?"
+						   + " Order by sequence, library";
+				savePriorString();
+			}
 		} else {
 			companySql = "Select * from " + libraryList
 					   + " Where library = '" + includeLibrary + "'";
@@ -103,15 +128,21 @@ public class CreateSQLSource {
 		try {
 			if (includeLibrary.isEmpty()) {
 				PreparedStatement checkStmt1 = connLibrary.prepareStatement(countSQL);;
-				ResultSet resultsSelect1 = checkStmt1.executeQuery();
-				resultsSelect1.next();
-				libCount = resultsSelect1.getInt(1);
+				if (numberOfLibrariesToCreate == 999999) {
+					ResultSet resultsSelect1 = checkStmt1.executeQuery();
+					resultsSelect1.next();
+					libCount = resultsSelect1.getInt(1);
+				} else {
+					libCount = numberOfLibrariesToCreate;
+				}
 			} else libCount = 1;
 			
 			if (libCount > 0) {
 				System.out.println(libCount + " libraries to build." );
 			}
 			PreparedStatement checkStmt2 = connLibrary.prepareStatement(companySql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+			if (numberOfLibrariesToCreate < 999999)
+				checkStmt2.setInt(1, startSeq);
 			ResultSet resultsSelect2 = checkStmt2.executeQuery();
 			while (resultsSelect2.next()) {
 				Boolean firstFile = true;
@@ -134,6 +165,23 @@ public class CreateSQLSource {
 				firstFile = false;
 				currentCount += 1;
 				System.out.println(currentCount + " libraries created. " + (libCount - currentCount) + " to go." );
+				// increment libraries create
+				numberOfLibrariesCreated++;
+				// check for libraries are limited
+				if (numberOfLibrariesToCreate < 999999) {
+					if (numberOfLibrariesCreated >= numberOfLibrariesToCreate) {
+						resultsSelect2.next();
+						int sequence = resultsSelect2.getInt(1);
+						libraryName = resultsSelect2.getString(3).trim().toLowerCase();
+						String updateSql = "Update LibraryCount "
+										 + "Set startSequence = " + sequence + ", startLibrary = '" + libraryName
+										 + "' Where company = ?";
+						PreparedStatement checkStmt = connLibrary.prepareStatement(updateSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						checkStmt.setString(1, company.trim());
+						checkStmt.executeUpdate();
+						break;
+					}
+				}
 			}
 			WriteCreateSQLTable("Create", "Drop");
 			WriteAlterCreateSQLTable();
@@ -1856,7 +1904,6 @@ public class CreateSQLSource {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
 	}
 
 	private static void WriteCreateSQLView(String createString, String dropString) {
@@ -1977,5 +2024,18 @@ public class CreateSQLSource {
 
 	public static void setIsJoinFile(Boolean isJoinFile) {
 		CreateSQLSource.isJoinFile = isJoinFile;
+	}
+	
+	public static void savePriorString() {
+		/*try (FileInputStream inAlter = new FileInputStream(new File("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + getCompany() + "\\sql\\alter.sql"))) {
+			while(( line = inAlter.readLine()) != null ) {
+				alterCreate.append( line );
+		     }
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
 	}
 }	

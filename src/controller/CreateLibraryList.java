@@ -14,18 +14,18 @@ public class CreateLibraryList {
 		
 		CheckTime ct = new CheckTime();
 		
-		String fromLibrary = args[0];
-		String companyliblist = fromLibrary + "liblist";
-		String resequence = fromLibrary + "liblistreseq";
-		String companyFile = fromLibrary + "file";
-		String companyFileList = fromLibrary + "filelist";
+		String company = args[0];
+		String companyliblist = company + "liblist";
+		String resequence = company + "liblistreseq";
+		String companyFile = company + "file";
+		String companyFileList = company + "filelist";
 		int currentSequence = 0;
 		Boolean currentRunOption = false;
 		
 		Connection connLibListMSSQL = null;
 		Connection connFloresCompanyMSSQL = null;
 		MsSQL dbLibListMSSQL = new MsSQL("liblist");
-		MsSQL dbFloresCompanyMSSQL = new MsSQL("flores_" + fromLibrary);
+		MsSQL dbFloresCompanyMSSQL = new MsSQL("flores_" + company);
 		try {
 			connLibListMSSQL = dbLibListMSSQL.connect();
 			connFloresCompanyMSSQL = dbFloresCompanyMSSQL.connect();
@@ -37,7 +37,7 @@ public class CreateLibraryList {
 		
 		String deleteSql1 = "delete from " + companyliblist;
 		String deleteSql2 = "delete from " + resequence;
-		String selectSql1 = "Select * from " + fromLibrary + " Order by library";
+		String selectSql1 = "Select * from " + company + " Order by library";
 		String insertSql1 = "insert into " + companyliblist + " (sequence, runoption, library, origlibrary) "
 						 + "values (?, ?, ?, ?)";
 		String selectSql2 = "select count(*) as numberOfRecords from qdspfdbas"
@@ -79,7 +79,7 @@ public class CreateLibraryList {
 					checkStmt2.close();
 					PreparedStatement checkStmt3;
 					checkStmt3 = connLibListMSSQL.prepareStatement(selectSql3);
-					checkStmt3.setString(1, fromLibrary);
+					checkStmt3.setString(1, company);
 					checkStmt3.setString(2, libraryName);
 					ResultSet resultsSelect3 = checkStmt3.executeQuery();
 					if (resultsSelect3.next()) {
@@ -169,9 +169,6 @@ public class CreateLibraryList {
 						currentSequence = 999;
 						insertStmt.setString(2, "n");
 						currentRunOption = false;
-					} else if (libraryName.length() >= 7 && libraryName.substring(0, 7).equals("mflores")) {
-						insertStmt.setInt(1, 11);
-						currentSequence = 11;
 					} else if (libraryName.length() >= 3 && libraryName.substring(0, 3).equals("jda")) {
 						insertStmt.setInt(1, 18);
 						currentSequence = 18;
@@ -462,7 +459,7 @@ public class CreateLibraryList {
 						currentSequence = 999;
 						currentRunOption = false;
 					} else if (libraryName.equals("qs36f")) {
-						if (fromLibrary.equals("cohere")) {
+						if (company.equals("cohere")) {
 							insertStmt.setInt(1, 1);
 							currentSequence = 1;
 							insertStmt.setString(2, "y");
@@ -471,7 +468,7 @@ public class CreateLibraryList {
 							insertStmt.setInt(1, 21);
 							currentSequence = 21;
 						}
-					} else if (libraryName.length() >= 5 && libraryName.substring(0, 5).equals("qs36f") && fromLibrary.equals("follett")) {
+					} else if (libraryName.length() >= 5 && libraryName.substring(0, 5).equals("qs36f") && company.equals("follett")) {
 							insertStmt.setInt(1, 21);
 							currentSequence = 21;
 					} else if(libraryName.length() >= 2 && libraryName.substring(0, 2).equals("y2")) {
@@ -502,7 +499,7 @@ public class CreateLibraryList {
 					} 
 
 					// Cohere specific
-					else if (libraryName.length() >= 5 && libraryName.substring(0, 5).equals("qs36f") && fromLibrary.equals("cohere")) {
+					else if (libraryName.length() >= 5 && libraryName.substring(0, 5).equals("qs36f") && company.equals("cohere")) {
 						if (!libraryName.equals("qs36fqa")) {
 							insertStmt.setInt(1, 1);
 							currentSequence = 1;
@@ -525,10 +522,10 @@ public class CreateLibraryList {
 						insertStmt.setInt(1, 8);
 						currentSequence = 8;
 					} else if(libraryName.length() >= 5 && libraryName.substring(0, 5).equals("dbu11")) {
-						if (fromLibrary.equals("cohere")) {
+						if (company.equals("cohere")) {
 							insertStmt.setInt(1, 8);
 							currentSequence = 8;
-						} else if (fromLibrary.equals("res")) {
+						} else if (company.equals("res")) {
 							insertStmt.setInt(1, 21);
 							currentSequence = 21;
 						} else { 
@@ -536,10 +533,10 @@ public class CreateLibraryList {
 							currentSequence = 41;
 						}
 					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("dbu")) {
-						if (fromLibrary.equals("cohere")) {
+						if (company.equals("cohere")) {
 							insertStmt.setInt(1, 9);
 							currentSequence = 9;
-						} else if (fromLibrary.equals("res")) {
+						} else if (company.equals("res")) {
 							insertStmt.setInt(1, 22);
 							currentSequence = 22;
 						} else { 
@@ -678,7 +675,7 @@ public class CreateLibraryList {
 						insertStmt.setString(2, "n");
 						currentRunOption = false;	
 						
-						// west end specific
+					// west end specific
 					} else if(libraryName.equals("jcccwhs")) {
 						insertStmt.setInt(1, 1);
 						currentSequence = 1;
@@ -715,13 +712,38 @@ public class CreateLibraryList {
 					} else if(libraryName.equals("idsurdta")) {
 						insertStmt.setInt(1, 7);
 						currentSequence = 7;
-						
+					
+					// norplex specific
+					} else if(libraryName.equals("iditsfil")) {
+						insertStmt.setInt(1, 1);
+						currentSequence = 1;
+					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("idi")) {
+						insertStmt.setInt(1, 2);
+						currentSequence = 2;
+					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("amf")) {
+							insertStmt.setInt(1, 9);
+							currentSequence = 9;
+					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("ama")) {
+						insertStmt.setInt(1, 10);
+						currentSequence = 10;
+					} else if(libraryName.length() >= 3 && libraryName.substring(0, 3).equals("amc")) {
+						insertStmt.setInt(1, 11);
+						currentSequence = 11;
+					} else if(libraryName.length() >= 2 && libraryName.substring(0, 2).equals("am")) {
+						insertStmt.setInt(1, 12);
+						currentSequence = 12;
+					} else if(libraryName.length() >= 2 && libraryName.substring(0, 2).equals("ha")) {
+						insertStmt.setInt(1, 13);
+						currentSequence = 13;
+
+
+
 					// Misc
 					} else if(libraryName.equals("qgpl")) {
 						insertStmt.setInt(1, 30);
 						currentSequence = 30;
 					} else if(libraryName.equals("qsys2")) {
-						if (fromLibrary.equals("walsworth")) {
+						if (company.equals("walsworth")) {
 							insertStmt.setInt(1, 999);
 							currentSequence = 999;
 							insertStmt.setString(2, "n");
@@ -733,6 +755,18 @@ public class CreateLibraryList {
 					} else if(libraryName.equals("zendphp7")) {
 						insertStmt.setInt(1, 99);
 						currentSequence = 99;
+					} else if(libraryName.length() >= 7 && libraryName.substring(0, 3).equals("mflores")) {
+						if (company.equals("follett")) {
+							insertStmt.setInt(1, 11);
+							currentSequence = 11;
+						} else if (company.equals("norplex")) {
+							insertStmt.setInt(1, 20);
+							currentSequence = 20;
+						} else { 
+							insertStmt.setInt(1, 30);
+							currentSequence = 30;
+							currentRunOption = false;	
+						}
 					} else {
 						insertStmt.setInt(1, 999);
 						currentSequence = 999;
@@ -743,7 +777,7 @@ public class CreateLibraryList {
 				}
 				PreparedStatement checkStmt4;
 				checkStmt4 = connLibListMSSQL.prepareStatement(selectSql4);
-				checkStmt4.setString(1, fromLibrary);
+				checkStmt4.setString(1, company);
 				checkStmt4.setString(2, libraryName);
 				ResultSet resultsSelect4 = checkStmt4.executeQuery();
 				if (resultsSelect4.next()) {
@@ -754,24 +788,24 @@ public class CreateLibraryList {
 						}
 						insertStmt.setString(2, "y");
 					} else {
-						if (fromLibrary.equals("res") || fromLibrary.equals("walsworth")) {
+						if (company.equals("res") || company.equals("walsworth")) {
 							insertStmt.setInt(1, 999);
 							insertStmt.setString(2, "n");
 						}
-						if (fromLibrary.equals("westend")) {
+						if (company.equals("westend")) {
 							if(libraryName.length() >= 4 && libraryName.substring(0, 4).equals("jccc")) {
 								insertStmt.setInt(1, 999);
 								insertStmt.setString(2, "n");
 							}
 						}
 						if (currentSequence <100) {
-							if (fromLibrary.equals("cohere") && libraryName.equals("qs36f")) {
+							if (company.equals("cohere") && libraryName.equals("qs36f")) {
 							} else {
 								currentSequence += 100;
 								insertStmt.setInt(1, currentSequence);
 							}
 						}
-						if (fromLibrary.equals("integrative")) {
+						if (company.equals("integrative")) {
 								insertStmt.setString(2, "y");
 						}
 					}
