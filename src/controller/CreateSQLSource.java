@@ -1,7 +1,6 @@
 package controller;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -11,8 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import org.apache.commons.io.IOUtils;
 
 import model.CheckTime;
 import model.MsSQL;
@@ -97,15 +94,13 @@ public class CreateSQLSource {
 		int numberOfLibrariesCreated = 0;
 		int startSeq = 0;
 		if (includeLibrary.isEmpty()) {
-			String libraryCountSql = "Select * from LibraryCount "
-								   + "Where company = ?";
+			String libraryCountSql = "Select count(*) as numberOfRecords from " + libraryList
+				                   + " Where runoption = 'y'";
 			try {
 				PreparedStatement checkStmt = connLibrary.prepareStatement(libraryCountSql);
-				checkStmt.setString(1, company.trim());
 				ResultSet resultsSelect = checkStmt.executeQuery();
 				resultsSelect.next();
-				numberOfLibrariesToCreate = resultsSelect.getInt(2);
-				startSeq = resultsSelect.getInt(3);
+				numberOfLibrariesToCreate = resultsSelect.getInt(1);
 			} catch (SQLException e) {
 				e.printStackTrace();
 			};
@@ -164,13 +159,15 @@ public class CreateSQLSource {
 				indexesCreated += createIndex(origLibraryName, firstFile);
 				firstFile = false;
 				currentCount += 1;
-				System.out.println(currentCount + " libraries created. " + (libCount - currentCount) + " to go." );
+				String returnString = currentCount + " libraries created. " + (libCount - currentCount) + " to go." ;
+				returnString = ct.calculateElapse(returnString);
+				System.out.println(returnString);
 				// increment libraries create
 				numberOfLibrariesCreated++;
 				// check for libraries are limited
 				if (numberOfLibrariesToCreate < 999999) {
 					if (numberOfLibrariesCreated >= numberOfLibrariesToCreate) {
-						resultsSelect2.next();
+					/*	resultsSelect2.next();
 						int sequence = resultsSelect2.getInt(1);
 						libraryName = resultsSelect2.getString(3).trim().toLowerCase();
 						String updateSql = "Update LibraryCount "
@@ -178,7 +175,7 @@ public class CreateSQLSource {
 										 + "' Where company = ?";
 						PreparedStatement checkStmt = connLibrary.prepareStatement(updateSql, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						checkStmt.setString(1, company.trim());
-						checkStmt.executeUpdate();
+						checkStmt.executeUpdate();*/
 						break;
 					}
 				}

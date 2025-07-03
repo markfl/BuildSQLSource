@@ -16,9 +16,9 @@ public class CreateLibraryList {
 		
 		String company = args[0];
 		String companyliblist = company + "liblist";
-		String resequence = company + "liblistreseq";
+		String resequence = companyliblist.trim() + "reseq";
 		String companyFile = company + "file";
-		String companyFileList = company + "filelist";
+		String companyFileList = companyFile.trim() + "list";
 		int currentSequence = 0;
 		Boolean currentRunOption = false;
 		
@@ -62,8 +62,11 @@ public class CreateLibraryList {
 				insertStmt.setString(3, libraryName.trim());
 				insertStmt.setString(4, origLibraryName.trim());
 				if (libraryName.length() >= 0) {
+					if (libraryName.equals("mfgdblib")) {
+						System.out.println(libraryName);
+					}
 					PreparedStatement checkStmt2 = connFloresCompanyMSSQL.prepareStatement(selectSql2);
-					checkStmt2.setString(1, libraryName.toUpperCase());
+					checkStmt2.setString(1, origLibraryName.toUpperCase());
 					ResultSet resultsSelect2 = checkStmt2.executeQuery();
 					if (resultsSelect2.next()) {
 						int numberOfRecords = resultsSelect2.getInt(1);

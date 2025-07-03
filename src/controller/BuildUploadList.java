@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import model.CheckTime;
@@ -35,6 +36,7 @@ public class BuildUploadList {
 		String liblist = company + "liblist";
 		String resequence = company + "liblistreseq";
 		
+		String selectSql = "Select runoption from " + resequence + " Where library = ?";
 		String deleteSql1 = "delete from " + fileListFile;
 		String deleteSql2 = "delete from rawdatasource where company = ?";
 		String deleteSql3 = "delete from rawdatafiles where company = ?";
@@ -72,90 +74,63 @@ public class BuildUploadList {
 		}
 		
 		try (BufferedReader dirin = new BufferedReader(new 
-				InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\liblist"), "UTF-8"))) {			String library;
+				InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\liblist"), "UTF-8"))) {
+			String library;
+			System.out.println("Adding to rawdatasource");
 			while ((library  = dirin.readLine()) != null ) {
-				PreparedStatement insertStmt = connMSSQLLibList.prepareStatement(insertSql2);
-				insertStmt.setString(1, company);
-				insertStmt.setString(2, library);
-				insertStmt.setString(3, company + "_" + library);
-				insertStmt.setString(4, library);
-				insertStmt.executeUpdate();
-				insertStmt = connMSSQLLibList.prepareStatement(insertSql4);
-				insertStmt.setString(1, company);
-				insertStmt.setString(2, library);
-				insertStmt.executeUpdate();
-				try (BufferedReader in = new BufferedReader(new 
-						InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\filestoread.txt"), "UTF-8"))) {
-					
-					String line;
-					while ((line  = in.readLine()) != null ) {
-						int a = line.indexOf(".");
-						String fileName = line.substring(0, a);
-						insertStmt = connMSSQLLibList.prepareStatement(insertSql1);
-						insertStmt.setString(1, library);
-						insertStmt.setString(2, fileName);
-						String fileInputStream = new String();
-						fileInputStream = "C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\" + fileName + ".csv";
-						double counterTotal = cb.getRecordCount(company, library, fileName, fileInputStream);
-						insertStmt.setInt(3, (int) counterTotal);
-						insertStmt.executeUpdate();
-						insertStmt = connMSSQLLibList.prepareStatement(insertSql3);
-						String dataDirectory = library;
-						String setLibrary = library;
-						if (company.equals("cohere")) {
-							if (library.equals("qs36f1")) {
-								setLibrary = "qs36f";
-							} else if (library.equals("qs36f2")) {
-								setLibrary = "qs36f";
-							} else if (library.equals("qs36f3")) {
-								setLibrary = "qs36f";
-							} else if (library.equals("qs36f4")) {
-								setLibrary = "qs36f";
-							} else if (library.equals("qs36f5")) {
-								setLibrary = "qs36f";
-							}
-						}
-						if (company.equals("walsworth")) {
-							if (library.equals("mfgdblib1")) {
-								setLibrary = "mfgdblib";
-							}
-						}
-						if (company.equals("norplex")) {
-							if (library.equals("amflibg1")) {
-								setLibrary = "amflibg";
-							}
-							if (library.equals("amflibg2")) {
-								setLibrary = "amflibg";
-							}
-							if (library.equals("amflibs1")) {
-								setLibrary = "amflibs";
-							}
-							if (library.equals("amflibs2")) {
-								setLibrary = "amflibs";
-							}
-							if (library.equals("amxlibd1")) {
-								setLibrary = "amxlibd";
-							}
-							if (library.equals("amxlibd2")) {
-								setLibrary = "amxlibd";
-							}
-						}
-						
+				/*PreparedStatement selectStmt = connMSSQLLibList.prepareStatement(selectSql);
+				selectStmt.setString(1, cb.CheckLibraryName(company, library.trim()));
+				ResultSet resultsSelect = selectStmt.executeQuery();
+				if (resultsSelect.next()) {
+					String runoption = resultsSelect.getString(1);
+					if (runoption.equalsIgnoreCase("y")) {*/
+						// Adding to rawdatasource
+						PreparedStatement insertStmt = connMSSQLLibList.prepareStatement(insertSql2);
 						insertStmt.setString(1, company);
-						insertStmt.setString(2, setLibrary);
-						insertStmt.setString(3, company + "_" + setLibrary);
-						insertStmt.setString(4, dataDirectory);
-						insertStmt.setString(5, fileName);
-						insertStmt.setString(6, setLibrary + "_" + fileName);
-						insertStmt.setInt(7, (int) counterTotal);
+						insertStmt.setString(2, library);
+						insertStmt.setString(3, company + "_" + library);
+						insertStmt.setString(4, library);
 						insertStmt.executeUpdate();
-						insertStmt.close();
-						System.out.println("File " + fileName + " in Library " + library + " added to " + fileListFile);
-					}
-					
-				} catch (SQLException e) {
-					e.printStackTrace();
-				}
+						insertStmt = connMSSQLLibList.prepareStatement(insertSql4);
+						insertStmt.setString(1, company);
+						insertStmt.setString(2, library);
+						insertStmt.executeUpdate();
+						try (BufferedReader in = new BufferedReader(new 
+								InputStreamReader(new FileInputStream("C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\filestoread.txt"), "UTF-8"))) {
+							
+							String line;
+							while ((line  = in.readLine()) != null ) {
+								int a = line.indexOf(".");
+								String fileName = line.substring(0, a);
+								insertStmt = connMSSQLLibList.prepareStatement(insertSql1);
+								insertStmt.setString(1, library);
+								insertStmt.setString(2, fileName);
+								String fileInputStream = new String();
+								fileInputStream = "C:\\Users Shared Folders\\markfl\\Documents\\My Development\\My SQL Source\\" + company + "\\data\\" + library + "\\" + fileName + ".csv";
+								double counterTotal = cb.getRecordCount(company, library, fileName, fileInputStream);
+								insertStmt.setInt(3, (int) counterTotal);
+								insertStmt.executeUpdate();
+								insertStmt = connMSSQLLibList.prepareStatement(insertSql3);
+								String dataDirectory = library;
+								String setLibrary = new String();
+								setLibrary = cb.CheckLibraryName(company, library.trim());
+								insertStmt.setString(1, company);
+								insertStmt.setString(2, setLibrary);
+								insertStmt.setString(3, company + "_" + setLibrary);
+								insertStmt.setString(4, dataDirectory);
+								insertStmt.setString(5, fileName);
+								insertStmt.setString(6, setLibrary + "_" + fileName);
+								insertStmt.setInt(7, (int) counterTotal);
+								insertStmt.executeUpdate();
+								insertStmt.close();
+								System.out.println("File " + fileName + " in Library " + library + " added to " + fileListFile);
+							}	
+						} catch (SQLException e) {
+							e.printStackTrace();
+						}
+					//}
+				//}
+				
 				PreparedStatement updateStmt = connMSSQLLibList.prepareStatement(updateSql1);
 				updateStmt.setString(1, "y");
 				updateStmt.setString(2, library);
